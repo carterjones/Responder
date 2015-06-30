@@ -31,6 +31,8 @@ parser.add_option('-A','--analyze', action="store_true", help="Analyze mode. Thi
 
 parser.add_option('-i','--ip', action="store", help="The ip address to redirect the traffic to. (usually yours)", metavar="10.20.30.40",dest="OURIP")
 
+parser.add_option('-l','--lip', action="store", help="The ip address to bind listeners to. (usually yours)", metavar="127.0.0.1",dest="LISTENING_IP")
+
 parser.add_option('-I','--interface', action="store", help="Network interface to use", metavar="eth0", dest="INTERFACE", default="Not set")
 
 parser.add_option('-b', '--basic',action="store_true", help="Set this if you want to return a Basic HTTP authentication. If not set, an NTLM authentication will be returned.", dest="Basic", default=False)
@@ -91,6 +93,7 @@ DontRespondToName = config.get('Responder Core', 'DontRespondToName').strip()
 DontRespondToName.split(",")
 #Cli options.
 OURIP = options.OURIP
+LISTENING_IP = options.LISTENING_IP
 LM_On_Off = options.LM_On_Off
 WPAD_On_Off = options.WPAD_On_Off
 Wredirect = options.Wredirect
@@ -1283,10 +1286,13 @@ def IsICMPRedirectPlausible(IP):
             pass
 
 def FindLocalIP(Iface):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.setsockopt(socket.SOL_SOCKET, 25, Iface+'\0')
-    s.connect(("127.0.0.1",9))#RFC 863
-    return s.getsockname()[0]
+    if LISTENING_IP:
+        return LISTENING_IP
+    else:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.setsockopt(socket.SOL_SOCKET, 25, Iface+'\0')
+        s.connect(('127.0.0.1',9))#RFC 863
+        return s.getsockname()[0]
 
 def AnalyzeICMPRedirect():
     if Analyze(AnalyzeMode) and OURIP is not None and INTERFACE == 'Not set':
